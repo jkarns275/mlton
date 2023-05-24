@@ -738,6 +738,9 @@ structure Elaborate =
          val (allowOptSemicolon, ac) =
             makeBool ({name = "allowOptSemicolon",
                        default = false, expert = false}, ac)
+         val (allowOptLeadingSemicolon, ac) =
+            makeBool ({name = "allowOptLeadingSemicolon",
+                       default = false, expert = false}, ac)
          val (allowOrPats, ac) =
             makeBool ({name = "allowOrPats",
                        default = false, expert = false}, ac)

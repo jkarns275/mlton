@@ -25,6 +25,7 @@ local
 in
    val allowOptBar = fn () => current allowOptBar
    val allowOptSemicolon = fn () => current allowOptSemicolon
+   val allowOptLeadingSemicolon = fn () => current allowOptLeadingSemicolon
    val allowRecordPunExps = fn () => current allowRecordPunExps
 end
 
@@ -309,6 +310,7 @@ type 'a whereAndEqns = WhereEquation.t list * 'a list
        | exp_2c of Exp.t list
        | exp_list of Exp.t list
        | exp_ps of Exp.t list
+       | exp_ps' of Exp.t list
        | expnode of Exp.node
        | expsAndTopdecs of Topdec.t list list
        | expsAndTopdecs' of Topdec.t list list
@@ -343,6 +345,8 @@ type 'a whereAndEqns = WhereEquation.t list * 'a list
        | optbar of unit
        | optbar' of unit
        | optsemicolon of unit
+       | optleadingsemicolon of unit
+       | optleadingsemicolon' of unit
        | pat of Pat.t
        | patitem of (Field.t * Region.t * Pat.Item.t)
        | patitems of ((Field.t * Region.t * Pat.Item.t) list * bool)
@@ -995,8 +999,11 @@ elabel  : field EQUALOP exp     (field, (reg (fieldleft, fieldright), exp))
 elabels : elabel COMMA elabels  (elabel :: elabels)
         | elabel                ([elabel])
 
-exp_ps  : exp optsemicolon      ([exp])
-        | exp SEMICOLON exp_ps  (exp :: exp_ps)
+exp_ps' : exp optsemicolon      ([exp])
+        | exp SEMICOLON exp_ps'  (exp :: exp_ps')
+
+exp_ps  : optleadingsemicolon exp_ps' (exp_ps')
+        | exp_ps' (exp_ps')
 
 exp : expnode (Exp.makeRegion' (expnode, expnodeleft, expnoderight))
 
@@ -1259,6 +1266,15 @@ optsemicolon
    | SEMICOLON   (if allowOptSemicolon ()
                     then ()
                     else error (reg (SEMICOLONleft, SEMICOLONright), "Optional semicolon disallowed, compile with -default-ann 'allowOptSemicolon true'"))
+
+optleadingsemicolon
+   : (* empty *) ()
+   | optleadingsemicolon' ()
+
+optleadingsemicolon' 
+   : SEMICOLON   (if allowOptLeadingSemicolon ()
+                    then ()
+                    else error (reg (SEMICOLONleft, SEMICOLONright), "Optional leading semicolon disallowed, compile with -default-ann 'allowOptLeadingSemicolon true'"))
 
 constOrBool
    : const (const)
