@@ -346,7 +346,6 @@ type 'a whereAndEqns = WhereEquation.t list * 'a list
        | optbar' of unit
        | optsemicolon of unit
        | optleadingsemicolon of unit
-       | optleadingsemicolon' of unit
        | pat of Pat.t
        | patitem of (Field.t * Region.t * Pat.Item.t)
        | patitems of ((Field.t * Region.t * Pat.Item.t) list * bool)
@@ -1002,8 +1001,7 @@ elabels : elabel COMMA elabels  (elabel :: elabels)
 exp_ps' : exp optsemicolon      ([exp])
         | exp SEMICOLON exp_ps'  (exp :: exp_ps')
 
-exp_ps  : optleadingsemicolon exp_ps' (exp_ps')
-        | exp_ps' (exp_ps')
+exp_ps  : exp_ps' (exp_ps')
 
 exp : expnode (Exp.makeRegion' (expnode, expnodeleft, expnoderight))
 
@@ -1043,10 +1041,20 @@ aexp    : OP longvid            (Exp.Var {name = longvid,
             (case exp_ps of
                 [exp] => Exp.Paren exp
               | _ => Exp.Seq (Vector.fromList exp_ps))
+        | LPAREN optleadingsemicolon exp_ps RPAREN
+            (case exp_ps of
+                [exp] => Exp.Paren exp
+              | _ => Exp.Seq (Vector.fromList exp_ps))
         | LPAREN exp_2c RPAREN  (Exp.tuple (Vector.fromList exp_2c))
         | LBRACKET exp_list RBRACKET  (Exp.List (Vector.fromList exp_list))
         | LBRACKET RBRACKET           (Exp.List (Vector.new0 ()))
         | LET decs IN exp_ps END
+            (Exp.Let (decs,
+                      case exp_ps of
+                         [exp] => exp
+                       | _ => Exp.makeRegion' (Exp.Seq (Vector.fromList exp_ps),
+                                               exp_psleft, exp_psright)))
+        | LET decs IN optleadingsemicolon exp_ps END
             (Exp.Let (decs,
                       case exp_ps of
                          [exp] => exp
@@ -1268,10 +1276,6 @@ optsemicolon
                     else error (reg (SEMICOLONleft, SEMICOLONright), "Optional semicolon disallowed, compile with -default-ann 'allowOptSemicolon true'"))
 
 optleadingsemicolon
-   : (* empty *) ()
-   | optleadingsemicolon' ()
-
-optleadingsemicolon' 
    : SEMICOLON   (if allowOptLeadingSemicolon ()
                     then ()
                     else error (reg (SEMICOLONleft, SEMICOLONright), "Optional leading semicolon disallowed, compile with -default-ann 'allowOptLeadingSemicolon true'"))
