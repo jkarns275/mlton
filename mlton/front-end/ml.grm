@@ -310,7 +310,6 @@ type 'a whereAndEqns = WhereEquation.t list * 'a list
        | exp_2c of Exp.t list
        | exp_list of Exp.t list
        | exp_ps of Exp.t list
-       | exp_ps' of Exp.t list
        | expnode of Exp.node
        | expsAndTopdecs of Topdec.t list list
        | expsAndTopdecs' of Topdec.t list list
@@ -998,10 +997,8 @@ elabel  : field EQUALOP exp     (field, (reg (fieldleft, fieldright), exp))
 elabels : elabel COMMA elabels  (elabel :: elabels)
         | elabel                ([elabel])
 
-exp_ps' : exp optsemicolon      ([exp])
-        | exp SEMICOLON exp_ps'  (exp :: exp_ps')
-
-exp_ps  : exp_ps' (exp_ps')
+exp_ps : exp optsemicolon      ([exp])
+        | exp SEMICOLON exp_ps  (exp :: exp_ps)
 
 exp : expnode (Exp.makeRegion' (expnode, expnodeleft, expnoderight))
 
