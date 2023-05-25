@@ -1045,12 +1045,6 @@ aexp    : OP longvid            (Exp.Var {name = longvid,
         | LBRACE RBRACE         (Exp.unit)
         | LBRACKET exp_list RBRACKET  (Exp.List (Vector.fromList exp_list))
         | LBRACKET RBRACKET           (Exp.List (Vector.new0 ()))
-        (* | LET decs IN exp_ps END
-            (Exp.Let (decs,
-                      case exp_ps of
-                         [exp] => exp
-                       | _ => Exp.makeRegion' (Exp.Seq (Vector.fromList exp_ps),
-                                               exp_psleft, exp_psright))) *)
         | LET decs IN optleadingsemicolon exp_ps END
             (Exp.Let (decs,
                       case exp_ps of
