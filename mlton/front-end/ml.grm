@@ -25,6 +25,7 @@ local
 in
    val allowOptBar = fn () => current allowOptBar
    val allowOptSemicolon = fn () => current allowOptSemicolon
+   val allowOptLeadingSemicolon = fn () => current allowOptLeadingSemicolon
    val allowRecordPunExps = fn () => current allowRecordPunExps
 end
 
@@ -343,6 +344,8 @@ type 'a whereAndEqns = WhereEquation.t list * 'a list
        | optbar of unit
        | optbar' of unit
        | optsemicolon of unit
+       | optleadingsemicolon of unit
+       | optleadingsemicolon' of unit
        | pat of Pat.t
        | patitem of (Field.t * Region.t * Pat.Item.t)
        | patitems of ((Field.t * Region.t * Pat.Item.t) list * bool)
@@ -995,7 +998,7 @@ elabel  : field EQUALOP exp     (field, (reg (fieldleft, fieldright), exp))
 elabels : elabel COMMA elabels  (elabel :: elabels)
         | elabel                ([elabel])
 
-exp_ps  : exp optsemicolon      ([exp])
+exp_ps : exp optsemicolon      ([exp])
         | exp SEMICOLON exp_ps  (exp :: exp_ps)
 
 exp : expnode (Exp.makeRegion' (expnode, expnodeleft, expnoderight))
@@ -1032,6 +1035,10 @@ aexp    : OP longvid            (Exp.Var {name = longvid,
           (Exp.Record (Record.fromVector (Vector.fromList elabels)))
         | LBRACE RBRACE         (Exp.unit)
         | LPAREN RPAREN         (Exp.unit)
+        | LPAREN optleadingsemicolon' exp_ps RPAREN
+            (case exp_ps of
+                [exp] => Exp.Paren exp
+              | _ => Exp.Seq (Vector.fromList exp_ps))
         | LPAREN exp_ps RPAREN
             (case exp_ps of
                 [exp] => Exp.Paren exp
@@ -1039,7 +1046,7 @@ aexp    : OP longvid            (Exp.Var {name = longvid,
         | LPAREN exp_2c RPAREN  (Exp.tuple (Vector.fromList exp_2c))
         | LBRACKET exp_list RBRACKET  (Exp.List (Vector.fromList exp_list))
         | LBRACKET RBRACKET           (Exp.List (Vector.new0 ()))
-        | LET decs IN exp_ps END
+        | LET decs IN optleadingsemicolon exp_ps END
             (Exp.Let (decs,
                       case exp_ps of
                          [exp] => exp
@@ -1259,6 +1266,15 @@ optsemicolon
    | SEMICOLON   (if allowOptSemicolon ()
                     then ()
                     else error (reg (SEMICOLONleft, SEMICOLONright), "Optional semicolon disallowed, compile with -default-ann 'allowOptSemicolon true'"))
+
+optleadingsemicolon
+   : (* empty *) ()
+   | optleadingsemicolon' (optleadingsemicolon')
+
+optleadingsemicolon'
+   : SEMICOLON   (if allowOptLeadingSemicolon ()
+                    then ()
+                    else error (reg (SEMICOLONleft, SEMICOLONright), "Optional leading semicolon disallowed, compile with -default-ann 'allowOptLeadingSemicolon true'"))
 
 constOrBool
    : const (const)

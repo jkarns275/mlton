@@ -171,6 +171,7 @@ signature CONTROL_FLAGS =
             val allowLineComments: (bool,bool) t
             val allowOptBar: (bool,bool) t
             val allowOptSemicolon: (bool,bool) t
+            val allowOptLeadingSemicolon: (bool,bool) t
             val allowOrPats: (bool,bool) t
             val allowRecordPunExps: (bool,bool) t
             val allowSigWithtype: (bool,bool) t
